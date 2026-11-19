@@ -1,0 +1,1525 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pagos bidones de agua</title>
+<meta name="description" content="Registro de pagos de bidones de agua por compañero y mes.">
+<meta name="theme-color" content="#0e7490" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pagos bidones">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<style>
+/* ---------- Base ---------- */
+:root{
+  --bg:#f2f6fa;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --brand:#0e7490;
+  --brand-2:#0891b2;
+  --brand-soft:#e0f2fe;
+  --brand-ring:rgba(8,145,178,.18);
+  --ok:#047857;
+  --ok-soft:#d1fae5;
+  --ok-border:#a7f3d0;
+  --warn:#b45309;
+  --warn-soft:#fef3c7;
+  --warn-border:#fde68a;
+  --danger:#b91c1c;
+  --danger-soft:#fee2e2;
+  --border:#e2e8f0;
+  --chip-bg:#e8eef6;
+  --input-bg:#ffffff;
+  --shadow:0 10px 30px rgba(15,23,42,.07);
+  --radius:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b1220;
+    --card:#131c2b;
+    --text:#e6edf6;
+    --muted:#93a4b8;
+    --brand:#22d3ee;
+    --brand-2:#0891b2;
+    --brand-soft:#0c2b33;
+    --brand-ring:rgba(34,211,238,.22);
+    --ok:#34d399;
+    --ok-soft:#0d2f24;
+    --ok-border:#155e46;
+    --warn:#fbbf24;
+    --warn-soft:#3a2a0b;
+    --warn-border:#7c5310;
+    --danger:#f87171;
+    --danger-soft:#3b1212;
+    --border:#243246;
+    --chip-bg:#1b2739;
+    --input-bg:#0f1a2a;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.45;
+  -webkit-tap-highlight-color:transparent;
+  overscroll-behavior-y:contain;
+}
+body.modal-open{overflow:hidden}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+a{color:var(--brand)}
+h1,h2,h3,p,ul{margin:0}
+ul{list-style:none;padding:0}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+.app{max-width:640px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+
+/* ---------- Encabezado ---------- */
+.topbar{
+  position:sticky;top:0;z-index:30;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+  background:color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+@supports not (background:color-mix(in srgb, red 50%, blue)){
+  .topbar{background:var(--bg)}
+}
+.topbar-inner{display:flex;align-items:center;gap:12px;max-width:640px;margin:0 auto}
+.logo{
+  width:42px;height:42px;flex:none;border-radius:14px;
+  display:grid;place-items:center;color:#fff;
+  background:linear-gradient(135deg,#22d3ee,#0e7490);
+  box-shadow:0 8px 18px -6px rgba(8,145,178,.55);
+}
+.logo svg{width:24px;height:24px}
+.brand{display:flex;flex-direction:column;min-width:0}
+.brand strong{font-size:1.05rem;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand span{font-size:.75rem;color:var(--muted)}
+
+/* ---------- Avisos ---------- */
+.banner{
+  padding:9px 16px;font-size:.8rem;font-weight:600;text-align:center;
+  background:var(--warn-soft);color:var(--warn);border-bottom:1px solid var(--warn-border);
+}
+.banner.error{background:var(--danger-soft);color:var(--danger);border-bottom-color:var(--danger-soft)}
+
+/* ---------- Vistas ---------- */
+main{flex:1;padding:16px 16px calc(92px + env(safe-area-inset-bottom));width:100%}
+.view{display:none}
+.view.active{display:block;animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ---------- Navegación de mes ---------- */
+.month-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 14px}
+.month-title{text-align:center;min-width:0}
+.month-title h2{font-size:1.18rem;font-weight:800;letter-spacing:-.02em;text-transform:capitalize}
+.month-title .link-btn{background:none;border:0;color:var(--brand);font-size:.75rem;font-weight:700;padding:2px 6px;text-decoration:underline}
+.nav-btn{
+  width:44px;height:44px;flex:none;border-radius:14px;
+  border:1px solid var(--border);background:var(--card);color:var(--text);
+  font-size:1.5rem;line-height:1;display:grid;place-items:center;
+  box-shadow:var(--shadow);transition:transform .12s;
+}
+.nav-btn:active{transform:scale(.94)}
+
+/* ---------- Resumen ---------- */
+.summary{
+  position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#0e7490,#0891b2 58%,#22c1d8);
+  color:#fff;border-radius:22px;padding:18px 18px 14px;margin-bottom:16px;
+  box-shadow:0 18px 34px -16px rgba(8,145,178,.65);
+}
+.summary::after{
+  content:"";position:absolute;right:-46px;top:-56px;width:180px;height:180px;
+  border-radius:50%;background:rgba(255,255,255,.12);pointer-events:none;
+}
+.summary-row{display:flex;justify-content:space-between;gap:16px;position:relative;z-index:1}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat span{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;opacity:.82}
+.stat strong{font-size:1.55rem;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.stat.right{text-align:right}
+.bar{height:8px;border-radius:999px;background:rgba(255,255,255,.25);overflow:hidden;margin:14px 0 10px;position:relative;z-index:1}
+.bar-fill{height:100%;width:0;background:#fff;border-radius:999px;transition:width .35s ease}
+.summary-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;z-index:1}
+.summary-foot>span{font-size:.82rem;font-weight:600;opacity:.95}
+.amount-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);
+  color:#fff;border-radius:999px;padding:7px 12px;font-size:.78rem;font-weight:700;
+  white-space:nowrap;transition:transform .12s;
+}
+.amount-chip:active{transform:scale(.96)}
+.amount-chip.warn{background:#fcd34d;border-color:#fcd34d;color:#422006}
+
+/* ---------- Barra de herramientas ---------- */
+.toolbar{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.search{
+  display:flex;align-items:center;gap:9px;padding:0 12px;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);
+}
+.search svg{width:18px;height:18px;flex:none;color:var(--muted)}
+.search input{
+  flex:1;border:0;background:transparent;padding:12px 0;font-size:1rem;
+  color:var(--text);outline:none;min-width:0;
+}
+.search input::placeholder{color:var(--muted)}
+.segmented{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;
+  background:var(--chip-bg);border-radius:14px;padding:4px;
+}
+.segmented button{
+  border:0;background:transparent;color:var(--muted);
+  padding:9px 6px;border-radius:10px;font-size:.85rem;font-weight:700;
+  transition:background .15s,color .15s;
+}
+.segmented button.active{background:var(--card);color:var(--brand);box-shadow:0 2px 8px rgba(15,23,42,.1)}
+
+/* ---------- Lista de personas ---------- */
+.people-list{display:flex;flex-direction:column;gap:10px}
+.person{
+  display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:11px 12px;box-shadow:0 2px 8px rgba(15,23,42,.04);
+  transition:opacity .15s,border-color .15s;
+}
+.person.paid{border-color:var(--ok-border);background:color-mix(in srgb, var(--ok-soft) 32%, var(--card))}
+@supports not (background:color-mix(in srgb, red 50%, blue)){
+  .person.paid{background:var(--card)}
+}
+.person.inactive{opacity:.68}
+.box{
+  width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+  background:var(--brand-soft);color:var(--brand);font-weight:800;font-size:.95rem;
+  overflow:hidden;
+}
+.person.paid .box{background:var(--ok-soft);color:var(--ok)}
+.person-main{min-width:0;display:flex;flex-direction:column;gap:2px}
+.person-note{font-size:.73rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person-name{font-weight:650;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person-meta{
+  display:block;
+  overflow:hidden;
+  font-size:.76rem;color:var(--muted);white-space:nowrap;text-overflow:ellipsis;
+}
+.person-meta a{color:var(--brand);text-decoration:none}
+.person-meta a:active{text-decoration:underline}
+.person-meta .dot{opacity:.5;margin:0 5px}
+.person-actions{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.amount{font-size:.72rem;color:var(--muted);font-weight:600}
+.pay-btn{
+  min-width:88px;height:40px;padding:0 14px;border-radius:12px;border:1px solid transparent;
+  font-size:.85rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  transition:transform .1s,filter .15s;
+}
+.pay-btn:active{transform:scale(.95)}
+.pay-btn.pending{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-border)}
+.pay-btn.paid{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-border)}
+.card .pay-btn{height:38px;min-width:0}
+.badge{
+  display:inline-block;font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
+  padding:2px 7px;border-radius:999px;background:var(--chip-bg);color:var(--muted);vertical-align:1px;
+}
+@media (max-width:360px){
+  .person{grid-template-columns:42px minmax(0,1fr) auto;gap:10px;padding:10px}
+  .box{width:42px;height:42px;border-radius:12px}
+  .pay-btn{min-width:76px;padding:0 10px}
+  .amount{font-size:.68rem}
+  .person-meta{font-size:.72rem}
+  .summary{padding:16px 16px 12px}
+  .stat strong{font-size:1.35rem}
+}
+
+/* ---------- Encabezados de vista ---------- */
+.view-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 6px}
+.view-head h2{font-size:1.25rem;font-weight:800;letter-spacing:-.02em}
+.hint{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+/* ---------- Vacío ---------- */
+.empty{
+  display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+  padding:34px 22px;background:var(--card);border:1px dashed var(--border);
+  border-radius:20px;color:var(--muted);
+}
+.empty-icon{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand)}
+.empty-icon svg{width:28px;height:28px}
+.empty h3{font-size:1rem;color:var(--text);font-weight:750}
+.empty p{font-size:.86rem;line-height:1.45;max-width:34ch}
+.empty .primary{margin-top:8px}
+
+/* ---------- Tarjetas (compañeros / ajustes) ---------- */
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;margin-bottom:14px;box-shadow:var(--shadow);
+}
+.card h3{font-size:.98rem;font-weight:750;margin-bottom:4px}
+.card p{font-size:.85rem;color:var(--muted);line-height:1.5}
+.card .primary,.card .ghost,.card .danger-btn{margin-top:12px}
+.card .row-actions{display:flex;flex-direction:column;gap:8px}
+.card .row-actions button{margin-top:0}
+.help summary{cursor:pointer;font-weight:700;font-size:.92rem;list-style:none}
+.help summary::-webkit-details-marker{display:none}
+.help summary::after{content:"+";float:right;color:var(--brand);font-weight:800}
+.help[open] summary::after{content:"–"}
+.help ul{margin-top:10px;padding-left:18px;list-style:disc;display:flex;flex-direction:column;gap:6px}
+.help li{font-size:.83rem;color:var(--muted);line-height:1.45}
+.help li strong{color:var(--text)}
+
+/* Formularios */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field span{font-size:.8rem;font-weight:700;color:var(--muted)}
+.field span em{font-style:normal;color:var(--danger)}
+input[type=text],input[type=tel],input[type=search],input[type=number],textarea{
+  width:100%;font:inherit;font-size:1rem;color:var(--text);
+  background:var(--input-bg);border:1px solid var(--border);border-radius:12px;
+  padding:11px 13px;outline:none;transition:border-color .15s,box-shadow .15s;
+}
+textarea{resize:vertical;min-height:56px}
+input:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-ring)}
+.search input[type=search],
+.search input[type=search]:focus{
+  border:0;border-radius:0;background:transparent;box-shadow:none;padding:12px 0;
+}
+.check-row{display:flex;align-items:center;gap:10px;margin:2px 0 16px}
+.check-row input{width:20px;height:20px;accent-color:var(--brand);flex:none}
+.check-row label{font-size:.86rem;font-weight:600}
+.form-error{
+  display:none;font-size:.82rem;font-weight:600;color:var(--danger);
+  background:var(--danger-soft);border-radius:10px;padding:8px 11px;margin-bottom:12px;
+}
+.form-error.show{display:block}
+
+/* Botones */
+.primary{
+  border:0;border-radius:14px;padding:12px 18px;font-weight:750;font-size:.92rem;
+  color:#fff;background:linear-gradient(180deg,var(--brand-2),var(--brand));
+  box-shadow:0 8px 18px -8px rgba(8,145,178,.6);
+  transition:transform .1s,filter .15s;
+}
+.primary:active{transform:scale(.98)}
+.primary:disabled{opacity:.5}
+.ghost{
+  border:1px solid var(--border);border-radius:14px;padding:11px 16px;
+  background:var(--card);color:var(--text);font-weight:700;font-size:.9rem;
+}
+.danger-btn{
+  border:1px solid var(--danger-soft);border-radius:14px;padding:11px 16px;
+  background:var(--danger-soft);color:var(--danger);font-weight:750;font-size:.9rem;
+}
+.link-btn{background:none;border:0;color:var(--brand);font-weight:700;font-size:.82rem;text-decoration:underline;padding:4px}
+.icon-btn{
+  flex:none;height:38px;padding:0 12px;border-radius:11px;
+  border:1px solid var(--border);background:var(--chip-bg);color:var(--brand);
+  font-size:.78rem;font-weight:750;
+}
+.danger-link{
+  display:block;width:100%;margin-top:6px;padding:12px;border:0;border-radius:12px;
+  background:none;color:var(--danger);font-weight:700;font-size:.85rem;text-decoration:underline;
+}
+
+/* ---------- Modales ---------- */
+.modal{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(2,6,23,.55);opacity:0;transition:opacity .2s}
+.modal.open .modal-backdrop{opacity:1}
+.sheet{
+  position:relative;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;
+  background:var(--card);border-radius:24px 24px 0 0;
+  padding:20px 20px calc(18px + env(safe-area-inset-bottom));
+  box-shadow:0 -18px 50px rgba(2,6,23,.28);
+  transform:translateY(26px);opacity:0;transition:transform .22s ease,opacity .22s ease;
+}
+.sheet.small{max-width:520px}
+.modal.open .sheet{transform:translateY(0);opacity:1}
+.sheet h3{font-size:1.1rem;font-weight:800;letter-spacing:-.01em;margin-bottom:4px}
+.sheet .modal-text{font-size:.88rem;color:var(--muted);line-height:1.5;margin-bottom:16px}
+.sheet .field{margin-bottom:10px}
+.sheet input[type=text],.sheet input[type=tel],.sheet textarea{padding:10px 12px}
+.sheet .check-row{margin:2px 0 12px}
+.sheet-actions{display:flex;gap:10px;margin-top:6px;position:sticky;bottom:0;background:var(--card);padding-top:8px}
+.sheet-actions button{flex:1}
+@media (min-width:720px){
+  .modal{align-items:center}
+  .sheet{border-radius:24px;max-width:520px;margin:24px}
+}
+
+/* ---------- Barra inferior ---------- */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:var(--card);border-top:1px solid var(--border);
+  padding-bottom:env(safe-area-inset-bottom);
+  box-shadow:0 -8px 24px rgba(15,23,42,.06);
+}
+.tabbar-inner{display:flex;max-width:640px;margin:0 auto}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:9px 0 8px;border:0;background:none;color:var(--muted);
+  font-size:.7rem;font-weight:700;letter-spacing:.01em;transition:color .15s;
+}
+.tab svg{width:22px;height:22px}
+.tab.active{color:var(--brand)}
+.tab:active{transform:scale(.96)}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));
+  transform:translate(-50%,12px);z-index:70;pointer-events:none;
+  background:#0f172a;color:#fff;border-radius:999px;padding:10px 18px;
+  font-size:.84rem;font-weight:600;max-width:calc(100% - 32px);text-align:center;
+  opacity:0;transition:opacity .2s,transform .2s;box-shadow:0 12px 26px rgba(2,6,23,.3);
+}
+@media (prefers-color-scheme: dark){
+  .toast{background:#e6edf6;color:#0b1220}
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Varios ---------- */
+.footer-note{text-align:center;font-size:.72rem;color:var(--muted);padding:6px 0 4px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M12 3.2c3.6 4.1 7 7.9 7 11.8a7 7 0 1 1-14 0c0-3.9 3.4-7.7 7-11.8Z"/>
+      </svg>
+    </span>
+    <div class="brand">
+      <strong id="serviceTitle">Bidones de agua</strong>
+      <span>Registro de pagos</span>
+    </div>
+  </div>
+</header>
+
+<div id="offlineBanner" class="banner" hidden>Sin conexión · la app sigue funcionando</div>
+<div id="storageWarning" class="banner error" hidden>Este navegador no permite guardar datos. Usá la copia de seguridad.</div>
+
+<main>
+  <!-- ============ MES ============ -->
+  <section class="view" id="view-month">
+    <div class="month-nav">
+      <button id="prevMonth" class="nav-btn" aria-label="Mes anterior">‹</button>
+      <div class="month-title">
+        <h2 id="monthLabel">—</h2>
+        <button id="todayBtn" class="link-btn" hidden>Ir al mes actual</button>
+      </div>
+      <button id="nextMonth" class="nav-btn" aria-label="Mes siguiente">›</button>
+    </div>
+
+    <div class="summary">
+      <div class="summary-row">
+        <div class="stat">
+          <span>Recaudado</span>
+          <strong id="statCollected">$0</strong>
+        </div>
+        <div class="stat right">
+          <span>Pendiente</span>
+          <strong id="statPending">$0</strong>
+        </div>
+      </div>
+      <div class="bar"><div class="bar-fill" id="statBar"></div></div>
+      <div class="summary-foot">
+        <span id="statCount">0 de 0 pagaron</span>
+        <button id="editAmountBtn" class="amount-chip" aria-label="Cambiar el monto del mes">$0 c/u</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/>
+        </svg>
+        <input id="searchInput" type="search" placeholder="Buscar por nombre o casillero" autocomplete="off" aria-label="Buscar compañero">
+      </label>
+      <div class="segmented" role="group" aria-label="Filtrar pagos">
+        <button data-filter="all" class="active">Todos</button>
+        <button data-filter="pending">Deben</button>
+        <button data-filter="paid">Pagaron</button>
+      </div>
+    </div>
+
+    <ul id="monthList" class="people-list"></ul>
+    <div id="monthEmpty" class="empty" hidden>
+      <div class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3.2c3.6 4.1 7 7.9 7 11.8a7 7 0 1 1-14 0c0-3.9 3.4-7.7 7-11.8Z"/></svg>
+      </div>
+      <h3 id="monthEmptyTitle">Todavía no hay compañeros</h3>
+      <p id="monthEmptyText">Agregá a los compañeros con su número de casillero para empezar a registrar los pagos del mes.</p>
+      <button id="emptyAddBtn" class="primary">Agregar compañero</button>
+    </div>
+  </section>
+
+  <!-- ============ COMPAÑEROS ============ -->
+  <section class="view" id="view-people">
+    <div class="view-head">
+      <h2>Compañeros</h2>
+      <button id="addPersonBtn" class="primary">+ Agregar</button>
+    </div>
+    <p class="hint" style="margin-bottom:14px">El casillero identifica a cada compañero y no se puede repetir. Los inactivos no aparecen en los meses nuevos.</p>
+    <ul id="peopleList" class="people-list"></ul>
+    <div id="peopleEmpty" class="empty" hidden>
+      <div class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17.5" cy="9.2" r="2.4"/><path d="M16 14.5c2.4-.2 4 1.4 4.5 3.8"/></svg>
+      </div>
+      <h3>Sin compañeros cargados</h3>
+      <p>Agregá el primero con su casillero, nombre y, si querés, su teléfono.</p>
+      <button id="emptyPeopleAdd" class="primary">Agregar compañero</button>
+    </div>
+  </section>
+
+  <!-- ============ AJUSTES ============ -->
+  <section class="view" id="view-settings">
+    <div class="view-head" style="margin-bottom:12px">
+      <h2>Ajustes</h2>
+    </div>
+
+    <div class="card" id="installCard" hidden>
+      <h3>Instalar la app</h3>
+      <p>Agregala a la pantalla de inicio para abrirla como una aplicación y usarla sin internet.</p>
+      <button id="installBtn" class="primary">Instalar en este dispositivo</button>
+    </div>
+
+    <div class="card">
+      <h3>Datos del servicio</h3>
+      <div class="field">
+        <span>Nombre del servicio</span>
+        <input id="setServiceName" type="text" maxlength="40" placeholder="Bidones de agua">
+      </div>
+      <div class="field" style="margin-bottom:6px">
+        <span>Monto mensual predeterminado (ARS)</span>
+        <input id="setDefaultAmount" type="text" inputmode="decimal" placeholder="0" autocomplete="off">
+      </div>
+      <p class="hint">Se usa al abrir un mes nuevo. El monto de cada mes se puede cambiar desde la pantalla del mes.</p>
+      <button id="saveSettings" class="primary">Guardar ajustes</button>
+    </div>
+
+    <div class="card">
+      <h3>Copia de seguridad</h3>
+      <p>Los datos se guardan solo en este teléfono. Descargá una copia cada tanto para no perderlos.</p>
+      <div class="row-actions">
+        <button id="exportBtn" class="primary">Descargar copia (.json)</button>
+        <button id="shareBtn" class="ghost">Compartir copia</button>
+        <button id="importBtn" class="ghost">Importar copia</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <p id="lastBackup" class="hint" style="margin-top:10px">Todavía no hiciste una copia.</p>
+    </div>
+
+    <details class="card help">
+      <summary>Cómo instalar y usar</summary>
+      <ul>
+        <li><strong>Android:</strong> abrí el link en Chrome, tocá el menú ⋮ y elegí “Instalar aplicación” o “Agregar a la pantalla de inicio”.</li>
+        <li><strong>iPhone:</strong> abrí el link en Safari, tocá Compartir y elegí “Agregar a pantalla de inicio”.</li>
+        <li><strong>Pagos:</strong> tocá el botón que dice “Debe” para marcarlo como pagado. Si te equivocaste, volvé a tocarlo.</li>
+        <li><strong>WhatsApp:</strong> el teléfono debe incluir el código de país (por ejemplo, 5491123456789).</li>
+        <li><strong>Respaldo:</strong> la copia se descarga como archivo. Guardala en Drive, WhatsApp o donde prefieras.</li>
+      </ul>
+    </details>
+
+    <div class="card">
+      <h3>Zona de riesgo</h3>
+      <p>Borra todos los compañeros, pagos y ajustes de este teléfono. No se puede deshacer.</p>
+      <button id="resetBtn" class="danger-btn">Borrar todos los datos</button>
+    </div>
+
+    <p class="footer-note">Anotador de pagos · v1.0 · <span id="year">2026</span></p>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Secciones">
+  <div class="tabbar-inner">
+    <button class="tab active" data-view="month">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>
+      </svg>
+      Mes
+    </button>
+    <button class="tab" data-view="people">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17.5" cy="9.2" r="2.4"/><path d="M16 14.5c2.4-.2 4 1.4 4.5 3.8"/>
+      </svg>
+      Compañeros
+    </button>
+    <button class="tab" data-view="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 7h9M18.5 7H20M4 17h3.5M13 17h7"/><circle cx="15.5" cy="7" r="2.2"/><circle cx="9.5" cy="17" r="2.2"/>
+      </svg>
+      Ajustes
+    </button>
+  </div>
+</nav>
+</div>
+
+<!-- ===== Modal compañero ===== -->
+<div class="modal" id="personModal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="personModalTitle">
+    <h3 id="personModalTitle">Agregar compañero</h3>
+    <form id="personForm" novalidate>
+      <div class="form-error" id="personError" role="alert"></div>
+      <div class="field">
+        <span>Número de casillero <em>*</em></span>
+        <input id="pBox" type="text" inputmode="numeric" maxlength="12" placeholder="Ej.: 24" autocomplete="off">
+      </div>
+      <div class="field">
+        <span>Nombre y apellido <em>*</em></span>
+        <input id="pName" type="text" maxlength="80" placeholder="Ej.: Juan Pérez" autocomplete="off">
+      </div>
+      <div class="field">
+        <span>Teléfono (con código de país)</span>
+        <input id="pPhone" type="tel" maxlength="28" placeholder="Ej.: 5491123456789" autocomplete="off">
+      </div>
+      <div class="field">
+        <span>Observaciones</span>
+        <textarea id="pNotes" rows="2" maxlength="200" placeholder="Opcional"></textarea>
+      </div>
+      <div class="check-row">
+        <input id="pActive" type="checkbox" checked>
+        <label for="pActive">Activo (aparece en los meses nuevos)</label>
+      </div>
+      <div class="sheet-actions">
+        <button type="button" class="ghost" data-close>Cancelar</button>
+        <button type="submit" class="primary">Guardar</button>
+      </div>
+      <button type="button" id="deletePersonBtn" class="danger-link" hidden>Eliminar compañero</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Modal monto del mes ===== -->
+<div class="modal" id="amountModal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="sheet small" role="dialog" aria-modal="true" aria-labelledby="amountTitle">
+    <h3 id="amountTitle">Monto del mes</h3>
+    <p class="modal-text" id="amountMonthLabel"></p>
+    <div class="field">
+      <span>Monto por compañero (ARS)</span>
+      <input id="monthAmountInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+    </div>
+    <p class="hint" style="margin-bottom:14px">Se aplica a todos los compañeros de este mes. Los meses anteriores conservan su monto.</p>
+    <div class="sheet-actions">
+      <button type="button" class="ghost" data-close>Cancelar</button>
+      <button type="button" id="saveMonthAmount" class="primary">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal confirmación ===== -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="sheet small" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h3 id="confirmTitle">Confirmar</h3>
+    <p class="modal-text" id="confirmText"></p>
+    <div class="sheet-actions">
+      <button type="button" class="ghost" data-close>Cancelar</button>
+      <button type="button" id="confirmBtn" class="danger-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= Utilidades ================= */
+const STORE_KEY = 'pagos_bidones_v1';
+const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const moneyFmt = new Intl.NumberFormat('es-AR', { style:'currency', currency:'ARS', minimumFractionDigits:0, maximumFractionDigits:2 });
+const numFmt = new Intl.NumberFormat('es-AR', { minimumFractionDigits:0, maximumFractionDigits:2 });
+
+const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
+
+function uid(){
+  return 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function esc(value){
+  return String(value == null ? '' : value).replace(/[&<>"']/g, ch => (
+    { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]
+  ));
+}
+function norm(value){
+  return String(value == null ? '' : value)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+function digits(value){ return String(value || '').replace(/\D/g, ''); }
+function money(n){ return moneyFmt.format(Number(n) || 0); }
+function amountValue(n){ const v = Number(n); return Number.isFinite(v) && v > 0 ? v : 0; }
+
+/* Acepta "3500", "3.500", "3.500,50", "3500.50" */
+function parseAmount(raw){
+  if (typeof raw === 'number') return raw;
+  let s = String(raw == null ? '' : raw).trim().replace(/[$\s]/g, '').replace(/ars/gi, '');
+  if (!s) return NaN;
+  const hasComma = s.includes(',');
+  const hasDot = s.includes('.');
+  if (hasComma && hasDot){
+    if (s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(/,/g, '');
+  } else if (hasComma){
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (hasDot){
+    if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    else if ((s.match(/\./g) || []).length > 1) s = s.replace(/\./g, '');
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+/* ================= Fechas ================= */
+function monthKeyOf(date){
+  return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+}
+function currentMonthKey(){ return monthKeyOf(new Date()); }
+function parseMonthKey(key){
+  const parts = String(key).split('-');
+  return { y: Number(parts[0]), m: Number(parts[1]) };
+}
+function shiftMonth(key, delta){
+  const { y, m } = parseMonthKey(key);
+  return monthKeyOf(new Date(y, m - 1 + delta, 1));
+}
+function monthTitle(key){
+  const { y, m } = parseMonthKey(key);
+  return MONTHS[m - 1] + ' ' + y;
+}
+function formatDateTime(iso){
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return d.toLocaleString('es-AR', { dateStyle:'short', timeStyle:'short' });
+}
+
+/* ================= Estado ================= */
+function defaultState(){
+  return {
+    version: 1,
+    settings: { serviceName: 'Bidones de agua', currency: 'ARS', defaultAmount: 0 },
+    colleagues: [],
+    months: {},
+    meta: { createdAt: new Date().toISOString(), lastBackupAt: null }
+  };
+}
+
+function normalize(raw){
+  const data = defaultState();
+  if (!raw || typeof raw !== 'object') return data;
+
+  if (raw.settings && typeof raw.settings === 'object'){
+    data.settings.serviceName = String(raw.settings.serviceName || 'Bidones de agua').slice(0, 60) || 'Bidones de agua';
+    data.settings.defaultAmount = amountValue(raw.settings.defaultAmount);
+  }
+
+  if (Array.isArray(raw.colleagues)){
+    const seen = new Set();
+    raw.colleagues.forEach(c => {
+      if (!c || typeof c !== 'object' || c.box == null || !c.name) return;
+      const id = c.id ? String(c.id) : uid();
+      if (seen.has(id)) return;
+      seen.add(id);
+      data.colleagues.push({
+        id,
+        box: String(c.box).slice(0, 12),
+        name: String(c.name).slice(0, 80),
+        phone: c.phone ? String(c.phone).slice(0, 28) : '',
+        notes: c.notes ? String(c.notes).slice(0, 200) : '',
+        active: c.active !== false,
+        createdAt: c.createdAt || new Date().toISOString()
+      });
+    });
+  }
+
+  if (raw.months && typeof raw.months === 'object'){
+    Object.keys(raw.months).forEach(key => {
+      const m = raw.months[key];
+      if (!/^\d{4}-\d{2}$/.test(key) || !m || typeof m !== 'object') return;
+      const month = {
+        amount: amountValue(m.amount),
+        payments: {},
+        createdAt: m.createdAt || null
+      };
+      if (m.payments && typeof m.payments === 'object'){
+        Object.keys(m.payments).forEach(id => {
+          const p = m.payments[id];
+          if (!p) return;
+          month.payments[id] = {
+            at: p.at || null,
+            amount: amountValue(p.amount)
+          };
+        });
+      }
+      data.months[key] = month;
+    });
+  }
+
+  if (raw.meta && typeof raw.meta === 'object'){
+    data.meta.createdAt = raw.meta.createdAt || data.meta.createdAt;
+    data.meta.lastBackupAt = raw.meta.lastBackupAt || null;
+  }
+  return data;
+}
+
+let state = defaultState();
+let storageOK = true;
+
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return defaultState();
+    return normalize(JSON.parse(raw));
+  } catch (err) {
+    console.warn('No se pudo leer el almacenamiento:', err);
+    return defaultState();
+  }
+}
+
+function saveState(){
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    storageOK = true;
+  } catch (err) {
+    storageOK = false;
+    const warning = $('#storageWarning');
+    if (warning) warning.hidden = false;
+    toast('No se pudieron guardar los datos. Descargá una copia de seguridad.', 4000);
+  }
+}
+
+function testStorage(){
+  try {
+    localStorage.setItem('__pagos_test__', '1');
+    localStorage.removeItem('__pagos_test__');
+    return true;
+  } catch (err){
+    return false;
+  }
+}
+
+/* ================= Consultas ================= */
+function byBox(a, b){
+  const na = parseInt(a.box, 10);
+  const nb = parseInt(b.box, 10);
+  const va = Number.isFinite(na) ? na : Infinity;
+  const vb = Number.isFinite(nb) ? nb : Infinity;
+  if (va !== vb) return va - vb;
+  return String(a.box).localeCompare(String(b.box), 'es', { numeric: true }) ||
+         String(a.name).localeCompare(String(b.name), 'es');
+}
+
+function getMonth(key, create){
+  if (!state.months[key] && create){
+    state.months[key] = {
+      amount: amountValue(state.settings.defaultAmount),
+      payments: {},
+      createdAt: new Date().toISOString()
+    };
+  }
+  return state.months[key] || null;
+}
+
+function monthAmount(key){
+  const month = state.months[key];
+  return month ? amountValue(month.amount) : amountValue(state.settings.defaultAmount);
+}
+
+function isPaid(key, id){
+  const month = state.months[key];
+  return !!(month && month.payments && month.payments[id]);
+}
+
+function visibleColleagues(key){
+  const month = state.months[key];
+  return state.colleagues
+    .filter(c => c.active || (month && month.payments && month.payments[c.id]))
+    .slice()
+    .sort(byBox);
+}
+
+function monthStats(key){
+  const colleagues = visibleColleagues(key);
+  const month = state.months[key];
+  const amount = monthAmount(key);
+  let paid = 0, collected = 0, pending = 0;
+  colleagues.forEach(c => {
+    const p = month && month.payments ? month.payments[c.id] : null;
+    if (p){ paid++; collected += Number(p.amount) || 0; }
+    else { pending += amount; }
+  });
+  return { total: colleagues.length, paid, collected, pending };
+}
+
+/* ================= Avisos y modales ================= */
+let toastTimer = null;
+function toast(message, ms){
+  const el = $('#toast');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), ms || 2200);
+}
+
+function syncBodyLock(){
+  document.body.classList.toggle('modal-open', !!$('.modal.open'));
+}
+
+function openModal(el){
+  if (!el) return;
+  const toastEl = $('#toast');
+  if (toastEl){
+    clearTimeout(toastTimer);
+    toastEl.classList.remove('show');
+  }
+  el.hidden = false;
+  requestAnimationFrame(() => el.classList.add('open'));
+  syncBodyLock();
+}
+
+function closeModal(el){
+  if (!el) return;
+  el.classList.remove('open');
+  setTimeout(() => {
+    if (!el.classList.contains('open')) el.hidden = true;
+    syncBodyLock();
+  }, 220);
+}
+
+let confirmCallback = null;
+function askConfirm(options){
+  $('#confirmTitle').textContent = options.title || 'Confirmar';
+  $('#confirmText').textContent = options.text || '';
+  const btn = $('#confirmBtn');
+  btn.textContent = options.confirmLabel || 'Confirmar';
+  btn.classList.toggle('danger-btn', options.danger !== false);
+  btn.classList.toggle('primary', options.danger === false);
+  confirmCallback = options.onConfirm || null;
+  openModal($('#confirmModal'));
+}
+
+/* ================= Estado de la interfaz ================= */
+const ui = {
+  month: currentMonthKey(),
+  view: 'month',
+  filter: 'all',
+  search: '',
+  editingId: null
+};
+
+/* ================= Render ================= */
+function renderHeader(){
+  $('#serviceTitle').textContent = state.settings.serviceName || 'Bidones de agua';
+}
+
+function renderMonth(){
+  const key = ui.month;
+  $('#monthLabel').textContent = monthTitle(key);
+  $('#todayBtn').hidden = key === currentMonthKey();
+
+  const stats = monthStats(key);
+  const amount = monthAmount(key);
+
+  $('#statCollected').textContent = money(stats.collected);
+  $('#statPending').textContent = money(stats.pending);
+  $('#statBar').style.width = stats.total ? Math.round(stats.paid / stats.total * 100) + '%' : '0%';
+
+  if (stats.total === 0){
+    $('#statCount').textContent = 'Sin compañeros';
+  } else if (stats.paid === stats.total){
+    $('#statCount').textContent = '¡Pagaron los ' + stats.total + '!';
+  } else {
+    $('#statCount').textContent = stats.paid + ' de ' + stats.total + ' pagaron';
+  }
+
+  const chip = $('#editAmountBtn');
+  chip.textContent = money(amount) + ' c/u ✎';
+  chip.classList.toggle('warn', !(amount > 0));
+  chip.setAttribute('aria-label', 'Cambiar el monto del mes: ' + money(amount) + ' por compañero');
+
+  renderMonthList(visibleColleagues(key), amount);
+}
+
+function renderMonthList(all, amount){
+  const key = ui.month;
+  const month = state.months[key];
+  const query = norm(ui.search);
+
+  const filtered = all.filter(c => {
+    const paid = isPaid(key, c.id);
+    if (ui.filter === 'paid' && !paid) return false;
+    if (ui.filter === 'pending' && paid) return false;
+    if (!query) return true;
+    return norm(c.name).includes(query) ||
+           norm(c.box).includes(query) ||
+           norm(c.phone).includes(query);
+  });
+
+  const list = $('#monthList');
+  list.innerHTML = filtered.map(c => {
+    const paid = isPaid(key, c.id);
+    const payment = paid && month && month.payments ? month.payments[c.id] : null;
+    const shownAmount = payment ? payment.amount : amount;
+    const phone = digits(c.phone);
+    const meta = [];
+
+    if (c.phone){
+      meta.push('<a href="tel:' + esc(phone) + '" aria-label="Llamar a ' + esc(c.name) + '">' + esc(c.phone) + '</a>');
+    }
+    if (phone.length >= 8){
+      meta.push('<a href="https://wa.me/' + esc(phone) + '" target="_blank" rel="noopener" aria-label="WhatsApp de ' + esc(c.name) + '">WhatsApp</a>');
+    }
+
+    const metaHTML = meta.join('<span class="dot">·</span>') ||
+      '<span style="opacity:.75">Sin datos de contacto</span>';
+
+    return '<li class="person' + (paid ? ' paid' : '') + '">' +
+      '<span class="box">' + esc(c.box) + '</span>' +
+      '<div class="person-main">' +
+        '<span class="person-name">' + esc(c.name) + '</span>' +
+        '<span class="person-meta">' + metaHTML + '</span>' +
+      '</div>' +
+      '<div class="person-actions">' +
+        '<span class="amount">' + money(shownAmount) + '</span>' +
+        '<button type="button" class="pay-btn ' + (paid ? 'paid' : 'pending') + '" data-id="' + esc(c.id) + '" ' +
+          'aria-pressed="' + paid + '" aria-label="' +
+          (paid ? 'Marcar a ' + esc(c.name) + ' como pendiente' : 'Marcar a ' + esc(c.name) + ' como pagado') +
+          '">' + (paid ? '✓ Pagó' : 'Debe') + '</button>' +
+      '</div>' +
+    '</li>';
+  }).join('');
+
+  const empty = $('#monthEmpty');
+  if (all.length === 0){
+    empty.hidden = false;
+    $('#monthEmptyTitle').textContent = 'Todavía no hay compañeros';
+    $('#monthEmptyText').textContent = 'Agregá a los compañeros con su número de casillero para empezar a registrar los pagos del mes.';
+    $('#emptyAddBtn').hidden = false;
+  } else if (filtered.length === 0){
+    empty.hidden = false;
+    $('#monthEmptyTitle').textContent = 'Sin resultados';
+    $('#monthEmptyText').textContent = query
+      ? 'No encontramos a nadie con “' + ui.search.trim() + '”. Probá con otro nombre o casillero.'
+      : 'No hay compañeros en este filtro.';
+    $('#emptyAddBtn').hidden = true;
+  } else {
+    empty.hidden = true;
+  }
+}
+
+function renderPeople(){
+  const list = $('#peopleList');
+  const colleagues = state.colleagues.slice().sort(byBox);
+
+  list.innerHTML = colleagues.map(c => {
+    const phone = digits(c.phone);
+    const meta = [];
+    if (c.phone){
+      meta.push('<a href="tel:' + esc(phone) + '" aria-label="Llamar a ' + esc(c.name) + '">' + esc(c.phone) + '</a>');
+    }
+    if (phone.length >= 8){
+      meta.push('<a href="https://wa.me/' + esc(phone) + '" target="_blank" rel="noopener">WhatsApp</a>');
+    }
+    const metaHTML = meta.join('<span class="dot">·</span>') ||
+      '<span style="opacity:.75">Sin datos de contacto</span>';
+
+    return '<li class="person' + (c.active ? '' : ' inactive') + '">' +
+      '<span class="box">' + esc(c.box) + '</span>' +
+      '<div class="person-main">' +
+        '<span class="person-name">' + esc(c.name) +
+          (c.active ? '' : ' <span class="badge">Inactivo</span>') +
+        '</span>' +
+        '<span class="person-meta">' + metaHTML + '</span>' +
+        (c.notes ? '<span class="person-note" title="' + esc(c.notes) + '">' + esc(c.notes) + '</span>' : '') +
+      '</div>' +
+      '<button type="button" class="icon-btn edit-person" data-id="' + esc(c.id) + '" ' +
+        'aria-label="Editar a ' + esc(c.name) + '">Editar</button>' +
+    '</li>';
+  }).join('');
+
+  $('#peopleEmpty').hidden = colleagues.length > 0;
+}
+
+function fillSettingsForm(){
+  $('#setServiceName').value = state.settings.serviceName || 'Bidones de agua';
+  $('#setDefaultAmount').value = state.settings.defaultAmount
+    ? numFmt.format(state.settings.defaultAmount)
+    : '';
+}
+
+function updateBackupHint(){
+  const el = $('#lastBackup');
+  if (!el) return;
+  el.textContent = state.meta.lastBackupAt
+    ? 'Última copia: ' + formatDateTime(state.meta.lastBackupAt)
+    : 'Todavía no hiciste una copia.';
+}
+
+function renderAll(){
+  renderHeader();
+  renderMonth();
+  renderPeople();
+  updateBackupHint();
+}
+
+/* ================= Acciones ================= */
+function switchView(view){
+  ui.view = view;
+  $$('.view').forEach(el => el.classList.toggle('active', el.id === 'view-' + view));
+  $$('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
+  if (view === 'settings') fillSettingsForm();
+  window.scrollTo(0, 0);
+}
+
+function setFilter(filter){
+  ui.filter = filter;
+  $$('.segmented button').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === filter));
+}
+
+function togglePaid(id){
+  const key = ui.month;
+  const month = getMonth(key, true);
+  const paid = !!month.payments[id];
+  if (paid){
+    delete month.payments[id];
+  } else {
+    month.payments[id] = { at: new Date().toISOString(), amount: monthAmount(key) };
+  }
+  saveState();
+  renderMonth();
+  if (paid){
+    toast('Pago desmarcado');
+  } else if (monthAmount(key) > 0){
+    toast('Pago registrado');
+  } else {
+    toast('Pago registrado. Configurá el monto del mes tocando “$0 c/u”.', 4200);
+  }
+}
+
+function openPersonModal(id){
+  const colleague = id ? state.colleagues.find(c => c.id === id) : null;
+  ui.editingId = colleague ? colleague.id : null;
+  $('#personModalTitle').textContent = colleague ? 'Editar compañero' : 'Agregar compañero';
+  $('#pBox').value = colleague ? colleague.box : '';
+  $('#pName').value = colleague ? colleague.name : '';
+  $('#pPhone').value = colleague ? colleague.phone : '';
+  $('#pNotes').value = colleague ? colleague.notes : '';
+  $('#pActive').checked = colleague ? colleague.active !== false : true;
+  $('#deletePersonBtn').hidden = !colleague;
+  const error = $('#personError');
+  error.textContent = '';
+  error.classList.remove('show');
+  openModal($('#personModal'));
+  setTimeout(() => $('#pBox').focus(), 260);
+}
+
+function personError(message, field){
+  const box = $('#personError');
+  box.textContent = message;
+  box.classList.add('show');
+  if (field) field.focus();
+}
+
+function openAmountModal(){
+  const amount = monthAmount(ui.month);
+  $('#amountMonthLabel').textContent = monthTitle(ui.month);
+  $('#monthAmountInput').value = numFmt.format(amount);
+  openModal($('#amountModal'));
+  setTimeout(() => $('#monthAmountInput').select(), 260);
+}
+
+function saveMonthAmount(){
+  const value = parseAmount($('#monthAmountInput').value);
+  if (!Number.isFinite(value) || value < 0){
+    toast('Ingresá un monto válido');
+    $('#monthAmountInput').focus();
+    return;
+  }
+  const month = getMonth(ui.month, true);
+  month.amount = value;
+  saveState();
+  closeModal($('#amountModal'));
+  renderMonth();
+  toast('Monto del mes actualizado');
+}
+
+/* ================= Copia de seguridad ================= */
+function backupJSON(){
+  return JSON.stringify(state, null, 2);
+}
+
+function backupFileName(){
+  const d = new Date();
+  const stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  return 'pagos-bidones-' + stamp + '.json';
+}
+
+function markBackupDone(){
+  state.meta.lastBackupAt = new Date().toISOString();
+  saveState();
+  updateBackupHint();
+}
+
+function downloadJSON(text, filename){
+  const blob = new Blob([text], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
+function exportBackup(){
+  downloadJSON(backupJSON(), backupFileName());
+  markBackupDone();
+  toast('Copia de seguridad descargada');
+}
+
+async function shareBackup(){
+  const text = backupJSON();
+  const filename = backupFileName();
+  const file = new File([text], filename, { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })){
+    try {
+      await navigator.share({ files: [file], title: 'Copia de seguridad de pagos' });
+      markBackupDone();
+      toast('Copia compartida');
+    } catch (err){
+      if (err && err.name !== 'AbortError') toast('No se pudo compartir. Usá “Descargar copia”.');
+    }
+  } else {
+    toast('Este navegador no permite compartir archivos. Usá “Descargar copia”.', 3800);
+  }
+}
+
+function importBackup(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(String(reader.result));
+      if (!data || typeof data !== 'object' || !data.settings || !Array.isArray(data.colleagues) || !data.months || typeof data.months !== 'object'){
+        throw new Error('formato inválido');
+      }
+      askConfirm({
+        title: 'Importar copia',
+        text: 'Se reemplazarán todos los datos actuales por los de este archivo (' + data.colleagues.length + ' compañeros). No se puede deshacer.',
+        confirmLabel: 'Importar',
+        danger: false,
+        onConfirm: () => {
+          state = normalize(data);
+          saveState();
+          ui.month = currentMonthKey();
+          ui.search = '';
+          $('#searchInput').value = '';
+          setFilter('all');
+          fillSettingsForm();
+          renderAll();
+          switchView('month');
+          toast('Copia importada correctamente');
+        }
+      });
+    } catch (err){
+      toast('El archivo no es una copia válida.', 3500);
+    }
+  };
+  reader.onerror = () => toast('No se pudo leer el archivo.', 3500);
+  reader.readAsText(file);
+}
+
+/* ================= Instalación y conexión ================= */
+let deferredPrompt = null;
+
+function setupInstall(){
+  const standalone = window.matchMedia('(display-mode: standalone)').matches ||
+                     window.navigator.standalone === true;
+  if (standalone) return;
+
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    deferredPrompt = event;
+    $('#installCard').hidden = false;
+  });
+
+  $('#installBtn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try { await deferredPrompt.userChoice; } catch (err) {}
+    deferredPrompt = null;
+    $('#installCard').hidden = true;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    $('#installCard').hidden = true;
+  });
+}
+
+function updateNetwork(){
+  const banner = $('#offlineBanner');
+  if (banner) banner.hidden = navigator.onLine;
+}
+
+/* ================= Eventos ================= */
+function bindEvents(){
+  $('#prevMonth').addEventListener('click', () => { ui.month = shiftMonth(ui.month, -1); renderMonth(); });
+  $('#nextMonth').addEventListener('click', () => { ui.month = shiftMonth(ui.month, 1); renderMonth(); });
+  $('#todayBtn').addEventListener('click', () => { ui.month = currentMonthKey(); renderMonth(); });
+
+  $('#editAmountBtn').addEventListener('click', openAmountModal);
+  $('#saveMonthAmount').addEventListener('click', saveMonthAmount);
+  $('#monthAmountInput').addEventListener('keydown', event => {
+    if (event.key === 'Enter'){ event.preventDefault(); saveMonthAmount(); }
+  });
+
+  $('#searchInput').addEventListener('input', event => {
+    ui.search = event.target.value;
+    renderMonth();
+  });
+
+  $$('.segmented button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setFilter(btn.dataset.filter);
+      renderMonth();
+    });
+  });
+
+  $('#monthList').addEventListener('click', event => {
+    const btn = event.target.closest('.pay-btn');
+    if (btn) togglePaid(btn.dataset.id);
+  });
+
+  $$('.tab').forEach(btn => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+
+  $('#addPersonBtn').addEventListener('click', () => openPersonModal());
+  $('#emptyAddBtn').addEventListener('click', () => openPersonModal());
+  $('#emptyPeopleAdd').addEventListener('click', () => openPersonModal());
+
+  $('#peopleList').addEventListener('click', event => {
+    const btn = event.target.closest('.edit-person');
+    if (btn) openPersonModal(btn.dataset.id);
+  });
+
+  $('#personForm').addEventListener('submit', event => {
+    event.preventDefault();
+    const box = $('#pBox').value.trim();
+    const name = $('#pName').value.trim();
+
+    if (!box) return personError('Ingresá el número de casillero.', $('#pBox'));
+    if (!name) return personError('Ingresá el nombre y apellido.', $('#pName'));
+
+    const duplicate = state.colleagues.find(c =>
+      c.id !== ui.editingId && norm(c.box) === norm(box)
+    );
+    if (duplicate){
+      return personError('El casillero ' + box + ' ya está asignado a ' + duplicate.name + '.', $('#pBox'));
+    }
+
+    const data = {
+      box: box.slice(0, 12),
+      name: name.slice(0, 80),
+      phone: $('#pPhone').value.trim().slice(0, 28),
+      notes: $('#pNotes').value.trim().slice(0, 200),
+      active: $('#pActive').checked
+    };
+
+    let editing = false;
+    if (ui.editingId){
+      const colleague = state.colleagues.find(c => c.id === ui.editingId);
+      if (colleague){
+        Object.assign(colleague, data);
+        editing = true;
+      }
+    }
+    if (!editing){
+      state.colleagues.push({
+        id: uid(),
+        box: data.box,
+        name: data.name,
+        phone: data.phone,
+        notes: data.notes,
+        active: data.active,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    saveState();
+    closeModal($('#personModal'));
+    renderAll();
+    toast(editing ? 'Compañero actualizado' : 'Compañero agregado');
+  });
+
+  $('#pBox').addEventListener('input', () => $('#personError').classList.remove('show'));
+  $('#pName').addEventListener('input', () => $('#personError').classList.remove('show'));
+
+  $('#deletePersonBtn').addEventListener('click', () => {
+    const colleague = state.colleagues.find(c => c.id === ui.editingId);
+    if (!colleague) return;
+    askConfirm({
+      title: 'Eliminar compañero',
+      text: 'Se eliminará a ' + colleague.name + ' (casillero ' + colleague.box + ') y todos sus pagos registrados en cualquier mes. Si solo dejó de participar, conviene marcarlo como inactivo.',
+      confirmLabel: 'Eliminar',
+      danger: true,
+      onConfirm: () => {
+        state.colleagues = state.colleagues.filter(c => c.id !== colleague.id);
+        Object.keys(state.months).forEach(key => {
+          const month = state.months[key];
+          if (month && month.payments) delete month.payments[colleague.id];
+        });
+        saveState();
+        closeModal($('#personModal'));
+        renderAll();
+        toast('Compañero eliminado');
+      }
+    });
+  });
+
+  $('#saveSettings').addEventListener('click', () => {
+    const name = $('#setServiceName').value.trim() || 'Bidones de agua';
+    const rawAmount = $('#setDefaultAmount').value.trim();
+    const amount = rawAmount === '' ? 0 : parseAmount(rawAmount);
+    if (!Number.isFinite(amount) || amount < 0){
+      toast('El monto predeterminado no es válido');
+      $('#setDefaultAmount').focus();
+      return;
+    }
+    state.settings.serviceName = name.slice(0, 40);
+    state.settings.defaultAmount = amount;
+    saveState();
+    renderHeader();
+    fillSettingsForm();
+    toast('Ajustes guardados');
+  });
+
+  $('#exportBtn').addEventListener('click', exportBackup);
+  $('#shareBtn').addEventListener('click', shareBackup);
+  $('#importBtn').addEventListener('click', () => $('#importFile').click());
+  $('#importFile').addEventListener('change', event => {
+    const file = event.target.files && event.target.files[0];
+    event.target.value = '';
+    if (file) importBackup(file);
+  });
+
+  $('#resetBtn').addEventListener('click', () => {
+    askConfirm({
+      title: 'Borrar todos los datos',
+      text: 'Se eliminarán compañeros, pagos y ajustes de este teléfono. Esta acción no se puede deshacer. Si tenés una copia de seguridad, podés volver a importarla.',
+      confirmLabel: 'Sí, borrar todo',
+      danger: true,
+      onConfirm: () => {
+        state = defaultState();
+        saveState();
+        ui.month = currentMonthKey();
+        ui.search = '';
+        $('#searchInput').value = '';
+        setFilter('all');
+        fillSettingsForm();
+        renderAll();
+        switchView('month');
+        toast('Datos borrados');
+      }
+    });
+  });
+
+  document.addEventListener('click', event => {
+    const closer = event.target.closest('[data-close]');
+    if (closer){
+      const modal = closer.closest('.modal');
+      if (modal) closeModal(modal);
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    const open = $$('.modal.open');
+    if (open.length) closeModal(open[open.length - 1]);
+  });
+
+  $('#confirmBtn').addEventListener('click', () => {
+    const callback = confirmCallback;
+    confirmCallback = null;
+    closeModal($('#confirmModal'));
+    if (callback) callback();
+  });
+
+  window.addEventListener('online', updateNetwork);
+  window.addEventListener('offline', updateNetwork);
+}
+
+/* ================= Service worker ================= */
+function registerServiceWorker(){
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+
+  const hadController = !!navigator.serviceWorker.controller;
+  let refreshing = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || refreshing) return;
+    refreshing = true;
+    location.reload();
+  });
+
+  navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+    .then(registration => {
+      registration.addEventListener('updatefound', () => {
+        const installing = registration.installing;
+        if (!installing) return;
+        installing.addEventListener('statechange', () => {
+          if (installing.state === 'installed' && navigator.serviceWorker.controller){
+            installing.postMessage('SKIP_WAITING');
+          }
+        });
+      });
+    })
+    .catch(err => console.warn('Service worker no registrado:', err));
+}
+
+/* ================= Inicio ================= */
+function init(){
+  storageOK = testStorage();
+  $('#storageWarning').hidden = storageOK;
+
+  state = loadState();
+  bindEvents();
+  setupInstall();
+  fillSettingsForm();
+  renderAll();
+  updateNetwork();
+  $('#year').textContent = new Date().getFullYear();
+  switchView('month');
+  registerServiceWorker();
+}
+
+if (document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+})();
+</script>
+</script>
+
+
+</body>
+</html>
