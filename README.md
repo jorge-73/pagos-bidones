@@ -10,6 +10,7 @@ Funciona en el celular como una app, **sin registro y sin servidor**: los datos 
 - Filtros (Todos, Deben, Pagaron) y buscador por nombre, casillero o teléfono.
 - **Compañeros**: casillero único, nombre y apellido, teléfono, observaciones y estado activo/inactivo.
 - Acceso directo para **llamar o abrir WhatsApp**.
+- **Recordatorios por WhatsApp** a quienes deben, uno por uno o desde una lista, con mensaje editable.
 - **Monto general por mes**, editable cuando cambia el precio.
 - **Copia de seguridad** en archivo `.json` (descargar, compartir e importar).
 - Funciona **sin internet** después de la primera carga.
@@ -83,6 +84,15 @@ Después de instalarla, se abre como una app y funciona aunque no tengas interne
 
 Si alguien deja de participar, editalo y desmarcá **Activo**. Deja de aparecer en los meses nuevos, pero sus pagos anteriores quedan guardados. También podés eliminarlo, con la salvedad de que se borran sus pagos de todos los meses.
 
+## Recordatorios por WhatsApp
+
+- En cada compañero que debe aparece un **botón verde de WhatsApp**. Al tocarlo se abre el chat con el mensaje ya escrito.
+- El botón **Recordar a los que deben (N)** abre la lista completa de pendientes para enviarles uno por uno.
+- Si el compañero no tiene un teléfono válido, el botón cambia a **Copiar**: copia el mensaje para pegarlo manualmente en WhatsApp.
+- Al enviar o copiar un recordatorio, la app anota la fecha y muestra **“Recordado hoy”** o el día en la fila del compañero.
+- El mensaje se puede editar en **Ajustes → Recordatorios por WhatsApp**. Podés usar `{nombre}`, `{mes}`, `{monto}` y `{servicio}`; la vista previa se actualiza mientras escribís.
+- El teléfono debe incluir el **código de país** (por ejemplo, `5491123456789`), igual que para los links de WhatsApp.
+
 ## Copia de seguridad
 
 Los datos viven **solo en ese teléfono**. Si se borran los datos del navegador o se pierde el celular, no hay forma de recuperarlos salvo que tengas una copia.
@@ -92,12 +102,25 @@ Los datos viven **solo en ese teléfono**. Si se borran los datos del navegador 
 - **Importar copia**: reemplaza todo por el contenido del archivo.
 - Guardá una copia cada tanto, por ejemplo al cerrar el mes.
 
+## Novedades
+
+### v1.1.0
+
+- Recordatorio individual por WhatsApp en cada compañero que debe.
+- Lista **Recordar a los que deben** con envío por persona y opción de copiar el mensaje.
+- Seguimiento de la fecha del último recordatorio por mes.
+- Plantilla de mensaje editable, con vista previa y opción de restaurar la predeterminada.
+
+### v1.0.0
+
+- Primera versión: registro de pagos por mes, compañeros, montos, copia de seguridad y uso sin internet.
+
 ## Actualizar la app más adelante
 
 1. Reemplazá los archivos modificados en GitHub (**Add file → Upload files**, sobrescribiendo).
 2. Para que los teléfonos tomen la versión nueva, cambiá la versión del caché en `sw.js`:
    ```js
-   const CACHE = 'pagos-bidones-v1.0.1';
+   const CACHE = 'pagos-bidones-v1.1.1';
    ```
 3. Cerrá y volvé a abrir la app. Se actualiza sola.
 

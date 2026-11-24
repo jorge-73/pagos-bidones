@@ -1,5 +1,5 @@
 /* Version: cambiar al publicar cambios para forzar la actualización */
-const CACHE = 'pagos-bidones-v1.0.0';
+const CACHE = 'pagos-bidones-v1.1.0';
 
 const ASSETS = [
   './',
