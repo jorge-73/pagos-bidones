@@ -289,6 +289,11 @@ main{flex:1;padding:16px 16px calc(92px + env(safe-area-inset-bottom));width:100
   display:block;font-size:.64rem;font-weight:700;color:var(--wa);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;
 }
+.paid-line,
+.last-payment-line{
+  display:block;font-size:.66rem;font-weight:700;color:var(--ok);
+  line-height:1.25;white-space:normal;
+}
 .amount{font-size:.72rem;color:var(--muted);font-weight:600}
 .pay-btn{
   min-width:88px;height:40px;padding:0 14px;border-radius:12px;border:1px solid transparent;
@@ -630,7 +635,7 @@ input:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--
       <ul>
         <li><strong>Android:</strong> abrí el link en Chrome, tocá el menú ⋮ y elegí “Instalar aplicación” o “Agregar a la pantalla de inicio”.</li>
         <li><strong>iPhone:</strong> abrí el link en Safari, tocá Compartir y elegí “Agregar a pantalla de inicio”.</li>
-        <li><strong>Pagos:</strong> tocá el botón que dice “Debe” para marcarlo como pagado. Si te equivocaste, volvé a tocarlo.</li>
+        <li><strong>Pagos:</strong> tocá el botón que dice “Debe” para marcarlo como pagado. Se guarda la fecha y hora en que lo marcaste. Si te equivocaste, volvé a tocarlo.</li>
         <li><strong>WhatsApp:</strong> el teléfono debe incluir el código de país (por ejemplo, 5491123456789).</li>
         <li><strong>Recordatorios:</strong> tocá el botón verde de un compañero que debe para abrir WhatsApp con el mensaje escrito. También podés usar “Recordar a los que deben” para enviarlos uno por uno. El mensaje se puede editar en Ajustes.</li>
         <li><strong>Respaldo:</strong> la copia se descarga como archivo. Guardala en Drive, WhatsApp o donde prefieras.</li>
@@ -643,7 +648,7 @@ input:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--
       <button id="resetBtn" class="danger-btn">Borrar todos los datos</button>
     </div>
 
-    <p class="footer-note">Anotador de pagos · v1.1.0 · <span id="year">2026</span></p>
+    <p class="footer-note">Anotador de pagos · v1.2.0 · <span id="year">2026</span></p>
   </section>
 </main>
 
@@ -824,11 +829,35 @@ function monthTitle(key){
   const { y, m } = parseMonthKey(key);
   return MONTHS[m - 1] + ' ' + y;
 }
+function pad2(n){
+  return String(n).padStart(2, '0');
+}
+function clockTime(d){
+  return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
 function formatDateTime(iso){
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d)) return '';
-  return d.toLocaleString('es-AR', { dateStyle:'short', timeStyle:'short' });
+  return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + clockTime(d);
+}
+function sameLocalDay(a, b){
+  return a.getFullYear() === b.getFullYear() &&
+         a.getMonth() === b.getMonth() &&
+         a.getDate() === b.getDate();
+}
+function paymentStamp(iso){
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const now = new Date();
+  const time = clockTime(d);
+  if (sameLocalDay(d, now)) return 'hoy a las ' + time;
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  if (sameLocalDay(d, yesterday)) return 'ayer a las ' + time;
+  const date = pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) +
+    (d.getFullYear() === now.getFullYear() ? '' : '/' + d.getFullYear());
+  return 'el ' + date + ' a las ' + time;
 }
 
 /* ================= Estado ================= */
@@ -999,6 +1028,26 @@ function monthStats(key){
   return { total: colleagues.length, paid, collected, pending };
 }
 
+function lastPaymentFor(id){
+  let best = null;
+  Object.keys(state.months).forEach(key => {
+    const month = state.months[key];
+    const payment = month && month.payments ? month.payments[id] : null;
+    if (!payment) return;
+    const at = payment.at || '';
+    const t = at ? new Date(at).getTime() : NaN;
+    const candidate = { at, key, t: Number.isFinite(t) ? t : null };
+    if (!best){
+      best = candidate;
+    } else if (candidate.t != null && (best.t == null || candidate.t > best.t)){
+      best = candidate;
+    } else if (candidate.t == null && best.t == null && candidate.key > best.key){
+      best = candidate;
+    }
+  });
+  return best;
+}
+
 /* ================= Recordatorios ================= */
 function waPhone(value){
   const phone = digits(value);
@@ -1015,11 +1064,10 @@ function reminderLabel(iso){
   const d = new Date(iso);
   if (isNaN(d)) return '';
   const now = new Date();
-  const day = x => x.getFullYear() + '-' + x.getMonth() + '-' + x.getDate();
-  if (day(d) === day(now)) return 'Recordado hoy';
+  if (sameLocalDay(d, now)) return 'Recordado hoy';
   const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-  if (day(d) === day(yesterday)) return 'Recordado ayer';
-  return 'Recordado ' + d.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' });
+  if (sameLocalDay(d, yesterday)) return 'Recordado ayer';
+  return 'Recordado ' + pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1);
 }
 
 function buildReminder(template, name, key, amount){
@@ -1257,6 +1305,11 @@ function renderMonthList(all, amount){
     const reminderHTML = !paid && reminded
       ? '<span class="reminded-line">✓ ' + esc(reminderLabel(reminded)) + '</span>'
       : '';
+    const paidAt = payment ? payment.at : '';
+    const paidHTML = paid
+      ? '<span class="paid-line" title="' + esc(paidAt ? 'Pagado el ' + formatDateTime(paidAt) : 'Pagado') + '">✓ Pagado' +
+          (paidAt ? ' ' + esc(paymentStamp(paidAt)) : '') + '</span>'
+      : '';
     const reminderBtn = phone.length >= 8
       ? '<a class="reminder-btn" href="' + esc(whatsappUrl(phone, reminderText(c, key))) + '" target="_blank" rel="noopener" ' +
           'data-remind="' + esc(c.id) + '" aria-label="Recordar por WhatsApp a ' + esc(c.name) + '" title="Recordar por WhatsApp">' + WA_ICON + '</a>'
@@ -1269,6 +1322,7 @@ function renderMonthList(all, amount){
         '<span class="person-name">' + esc(c.name) + '</span>' +
         '<span class="person-meta">' + metaHTML + '</span>' +
         reminderHTML +
+        paidHTML +
       '</div>' +
       '<div class="person-actions">' +
         '<span class="amount">' + money(shownAmount) + '</span>' +
@@ -1316,6 +1370,14 @@ function renderPeople(){
     }
     const metaHTML = meta.join('<span class="dot">·</span>') ||
       '<span style="opacity:.75">Sin datos de contacto</span>';
+    const lastPayment = lastPaymentFor(c.id);
+    const lastPaymentHTML = lastPayment
+      ? '<span class="last-payment-line" title="' +
+          esc(lastPayment.at ? 'Último pago: ' + formatDateTime(lastPayment.at) : 'Último pago: ' + monthTitle(lastPayment.key)) +
+          '">Último pago: ' +
+          esc(lastPayment.at ? paymentStamp(lastPayment.at) : monthTitle(lastPayment.key)) +
+        '</span>'
+      : '';
 
     return '<li class="person' + (c.active ? '' : ' inactive') + '">' +
       '<span class="box">' + esc(c.box) + '</span>' +
@@ -1324,6 +1386,7 @@ function renderPeople(){
           (c.active ? '' : ' <span class="badge">Inactivo</span>') +
         '</span>' +
         '<span class="person-meta">' + metaHTML + '</span>' +
+        lastPaymentHTML +
         (c.notes ? '<span class="person-note" title="' + esc(c.notes) + '">' + esc(c.notes) + '</span>' : '') +
       '</div>' +
       '<button type="button" class="icon-btn edit-person" data-id="' + esc(c.id) + '" ' +
@@ -1371,6 +1434,7 @@ function switchView(view){
   $$('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
   if (view === 'settings') fillSettingsForm();
   if (view === 'month') renderMonth();
+  if (view === 'people') renderPeople();
   window.scrollTo(0, 0);
 }
 
@@ -1390,6 +1454,7 @@ function togglePaid(id){
   }
   saveState();
   renderMonth();
+  renderPeople();
   if (paid){
     toast('Pago desmarcado');
   } else if (monthAmount(key) > 0){

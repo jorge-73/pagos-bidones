@@ -7,6 +7,7 @@ Funciona en el celular como una app, **sin registro y sin servidor**: los datos 
 
 - **Mes actual** con navegación entre meses, total recaudado, pendiente y cuántos pagaron.
 - Lista por **número de casillero** con botón para marcar **Pagó / Debe**.
+- Cada pago guarda y muestra la **fecha y hora** en que lo marcaste; en Compañeros se ve el **último pago** de cada uno.
 - Filtros (Todos, Deben, Pagaron) y buscador por nombre, casillero o teléfono.
 - **Compañeros**: casillero único, nombre y apellido, teléfono, observaciones y estado activo/inactivo.
 - Acceso directo para **llamar o abrir WhatsApp**.
@@ -73,7 +74,7 @@ Después de instalarla, se abre como una app y funciona aunque no tengas interne
 
 1. En **Ajustes**, poné el nombre del servicio y el **monto mensual predeterminado**.
 2. En **Compañeros**, cargá a cada uno con su casillero, nombre y teléfono.
-3. En **Mes**, tocá el botón que dice **Debe** cuando alguien pague. Se pone verde y dice **Pagó**.
+3. En **Mes**, tocá el botón que dice **Debe** cuando alguien pague. Se pone verde, dice **Pagó** y muestra la fecha y hora en que lo marcaste.
    - Si te equivocaste, volvé a tocarlo para desmarcarlo.
 4. Usá las flechas **‹ ›** para cambiar de mes. El botón **Ir al mes actual** te devuelve al presente.
 5. Si cambia el precio del agua, tocá el monto en el recuadro azul (**“$ 3.500 c/u ✎”**) y escribí el nuevo valor.
@@ -83,6 +84,12 @@ Después de instalarla, se abre como una app y funciona aunque no tengas interne
 ### Compañeros inactivos
 
 Si alguien deja de participar, editalo y desmarcá **Activo**. Deja de aparecer en los meses nuevos, pero sus pagos anteriores quedan guardados. También podés eliminarlo, con la salvedad de que se borran sus pagos de todos los meses.
+
+### Fecha y hora del pago
+
+Cada vez que marcás a alguien como pagado, la app guarda la fecha y hora de ese momento. En la fila del mes aparece, por ejemplo, **“✓ Pagado hoy a las 13:04”**. En **Compañeros** se muestra el **último pago** de cada uno, buscando el más reciente entre todos los meses.
+
+Si un pago viejo no tiene hora guardada, se muestra solo el mes correspondiente.
 
 ## Recordatorios por WhatsApp
 
@@ -104,6 +111,11 @@ Los datos viven **solo en ese teléfono**. Si se borran los datos del navegador 
 
 ## Novedades
 
+### v1.2.0
+
+- Fecha y hora visible en cada pago marcado.
+- Último pago de cada compañero en la vista Compañeros.
+
 ### v1.1.0
 
 - Recordatorio individual por WhatsApp en cada compañero que debe.
@@ -120,7 +132,7 @@ Los datos viven **solo en ese teléfono**. Si se borran los datos del navegador 
 1. Reemplazá los archivos modificados en GitHub (**Add file → Upload files**, sobrescribiendo).
 2. Para que los teléfonos tomen la versión nueva, cambiá la versión del caché en `sw.js`:
    ```js
-   const CACHE = 'pagos-bidones-v1.1.1';
+   const CACHE = 'pagos-bidones-v1.2.1';
    ```
 3. Cerrá y volvé a abrir la app. Se actualiza sola.
 
